@@ -7,10 +7,10 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * WebSocket Server
@@ -30,14 +30,23 @@ public class WebSocketChatServer {
      */
 
     private Session session;
-    private static Map<String, String> users = new HashMap<>();
-    private static Map<String, Session> onlineSessions = new ConcurrentHashMap<>();
+    private int onlineCount;
+    private static Set<String> users = new HashSet<>();
+    private static Map<String, Session> onlineSessions = new ConcurrentHashMap<>(); //string --> ID,
 
-    private static void sendMessageToAll(String msg) {
+    private static void sendMessageToAll(Message msg) throws IOException {
         //TODO: add send message method.
         for (Session session : onlineSessions.values()) {
-            Message newMessageToAll = new Message(msg);
-            newMessageToAll.setUserName(users.get(session.getId()));
+            String str;
+            if (msg.getType().equals("ENTER") && onlineSessions.containsKey(msg.getUsername())) {
+                str = msg.getUsername() + " just enter the room.";
+            } else if (msg.getType().equals("LEAVE")) {
+                str = msg.getUsername() + " just left the room.";
+            } else if (msg.getType().equals("SPEAK")){
+                str = msg.getUsername() + " said: " + msg.getMsg();
+            }
+
+            session.getBasicRemote().sendText(msg.getMsg());
         }
     }
 
@@ -50,51 +59,50 @@ public class WebSocketChatServer {
     @OnOpen
     public void onOpen(Session session,
                        @PathParam("username") String username) throws IOException {
-        //TODO: add on open connection.
+        //"@PathParam("username") String username" auto read the form and bind the data to variable "username" . But where to find?
         //add session
-        onlineSessions.put(username, session);
+        onlineSessions.put(session.getId(), session);
         //add users
-        users.put(session.getId(), username);
-        Message loginMessage = new Message();
-        loginMessage.setUserName(username);
-        loginMessage.setContent(Message.getUserName() + " just come into the room");
-        sendMessageToAll(loginMessage.getContent());
+        users.add(username);
+        onlineCount = users.size();
+
+        Message loginMsg = new Message();
+        loginMsg.setUserName(username);
+        loginMsg.setType("ENTER");
+        loginMsg.setOnlineCount(users.size() + 1);
+        sendMessageToAll(loginMsg);
     }
 
     /**
      * Send message, 1) get username and session, 2) send message to all.
      */
     @OnMessage
-    public void onMessage(Session session, String jsonStr) {
-        //TODO: add send message.
-
-        //create a new message on jsonStr
-        Message thisMessage = new Message(jsonStr);
-        if (jsonStr != null) {
-            thisMessage.setType("SPEAK");
-            String thisUser = users.get(session.getId());
-            thisMessage.setUserName(thisUser);
-            thisMessage.setContent(thisUser + " : " + jsonStr);
-        }
+    public void onMessage(Session session, String jsonStr) throws IOException {
+       //create a new message on jsonStr
+        Message onMsg = new Message();
+        onMsg.setUserName(session.getId());
+        onMsg.setType("SPEAK");
+        onMsg.setMsg(jsonStr);
 
         //sendMessageToAll(message);
-        if (thisMessage.getType().equals("SPEAK")) {
-            sendMessageToAll(thisMessage.getContent());
-        }
+        sendMessageToAll(onMsg);
     }
 
     /**
      * Close connection, 1) remove session, 2) update user.
      */
     @OnClose
-    public void onClose(Session session) {
+    public void onClose(Session session) throws IOException {
         //TODO: add close connection.
-        onlineSessions.remove(users.get(session.getId()));
+        onlineSessions.remove(session.getId());
+        users.remove(session.getId());
 
-        Message closeMessage = new Message();
-        String closeUser = users.get(session.getId());
-        closeMessage.setContent(closeUser + " just left the room");
-        sendMessageToAll(closeMessage.getContent());
+        Message closeMsg = new Message();
+        closeMsg.setUserName(session.getId());
+        closeMsg.setType("LEAVE");
+        closeMsg.setOnlineCount(users.size() - 1);
+
+        sendMessageToAll(closeMsg);
     }
 
     /**

@@ -151,8 +151,8 @@
      */
     function login() {
         // TODO: complete the login function
-        window.location.href = "http://localhost:8080/login";
-    }
+        var un = $("#username").val();
+        window.location.href = "http://localhost:8080/index?username=" + un;
 
     /**
      * Enter to login.

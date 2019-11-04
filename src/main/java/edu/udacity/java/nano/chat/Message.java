@@ -5,25 +5,33 @@ package edu.udacity.java.nano.chat;
  */
 public class Message {
 
-    private static String userName;
-    private String content;
+    private String username;
+    private String msg;
     private String type;
-    private String onlineCount;
+    private int onlineCount;
 
-    public String getContent() {
-        return content;
+    public int getOnlineCount() {
+        return onlineCount;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setOnlineCount(int onlineCount) {
+        this.onlineCount = onlineCount;
     }
 
-    public static String getUserName() {
-        return userName;
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     public void setUserName(String userName) {
-        this.userName = userName;
+        this.username = userName;
     }
 
     public String getType() {
@@ -34,18 +42,10 @@ public class Message {
         this.type = type;
     }
 
-    public String getOnlineCount() {
-        return onlineCount;
-    }
-
-    public void setOnlineCount(String onlineCount) {
-        this.onlineCount = onlineCount;
-    }
-
-
     public Message(){}
 
-    public Message(String content){
-        this.content = content;
+    public Message(String msg){
+        this.msg = msg;
     }
+
 }
