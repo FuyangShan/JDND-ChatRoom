@@ -41,14 +41,16 @@ public class WebSocketChatServer {
         for (Session session : onlineSessions.values()) {
             String str = "";
             if (msg.getType().equals("ENTER") && onlineSessions.containsKey(msg.getUsername())) {
-                str = msg.getUsername() + " just enter the room.";
+                str = " just enter the room.";
             } else if (msg.getType().equals("LEAVE")) {
-                str = msg.getUsername() + " just left the room.";
+                str = " just left the room.";
             } else if (msg.getType().equals("SPEAK")){
-                str = msg.getUsername() + " said: " + msg.getMsg();
+                str = " said: " + msg.getMsg();
             }
             msg.setMsg(str);
             String json = JSON.toJSONString(msg);
+
+            //System.out.println(json);
             session.getBasicRemote().sendText(json);
         }
     }
@@ -72,7 +74,7 @@ public class WebSocketChatServer {
         Message loginMsg = new Message();
         loginMsg.setUserName(username);
         loginMsg.setType("ENTER");
-        loginMsg.setOnlineCount(users.size() + 1);
+        loginMsg.setOnlineCount(users.size());
         sendMessageToAll(loginMsg);
     }
 
@@ -82,13 +84,14 @@ public class WebSocketChatServer {
     @OnMessage
     public void onMessage(Session session, String jsonStr) throws IOException {
        //create a new message on jsonStr
-        Message onMsg = new Message();
-        onMsg.setUserName(session.getId());
-        onMsg.setType("SPEAK");
-        onMsg.setMsg(jsonStr);
+        Message message = JSON.parseObject(jsonStr, Message.class);
+        //System.out.println(jsonStr);
+
+        message.setType("SPEAK");
+        message.setOnlineCount(users.size());
 
         //sendMessageToAll(message);
-        sendMessageToAll(onMsg);
+        sendMessageToAll(message);
     }
 
     /**
@@ -103,7 +106,7 @@ public class WebSocketChatServer {
         Message closeMsg = new Message();
         closeMsg.setUserName(session.getId());
         closeMsg.setType("LEAVE");
-        closeMsg.setOnlineCount(users.size() - 1);
+        closeMsg.setOnlineCount(users.size());
 
         sendMessageToAll(closeMsg);
     }

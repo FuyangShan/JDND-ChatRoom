@@ -23,7 +23,7 @@ public class WebSocketChatApplication {
      */
     @GetMapping("/")
     public ModelAndView login() {
-        return new ModelAndView("/login");
+        return new ModelAndView("login");
     }
 
     /**
@@ -36,7 +36,7 @@ public class WebSocketChatApplication {
         //add username to modelView object;
         //return modelView
 
-        ModelAndView chatView = new ModelAndView("/chat");
+        ModelAndView chatView = new ModelAndView("chat");
         chatView.addObject("username", username);
         return chatView;
     }
